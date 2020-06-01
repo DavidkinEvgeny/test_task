@@ -3,7 +3,6 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.urls import reverse_lazy
 from django.utils import timezone
 from datetime import datetime, timedelta
-from django.core.mail import send_mail
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import generics
@@ -11,6 +10,9 @@ from .models import Sheet
 from .forms import SheetForm
 from .serializers import SheetListSerializer, SheetDetailSerializer, SheetCreateViewSerializer, \
     SheetUpdateViewSerializer, SheetDeleteViewSerializer, SerchResultsSerializer
+from .service import send
+from .tasks import send_my_email
+
 
 
 class SheetListView(ListView):
@@ -23,10 +25,7 @@ class SheetListView(ListView):
 class SheetListViewAPI(generics.ListAPIView):
     '''API списка записей'''
     serializer_class = SheetListSerializer
-    def get_queryset(self):
-        sheet_list = Sheet.objects.all()
-        return sheet_list
-
+          
 
 class SheetDetailView(DetailView):
     '''Представление отдельной записи'''
@@ -49,19 +48,15 @@ class SheetCreateView(CreateView):
 
     def form_valid(self, form):
         form.save()
-        send_mail(
-            form.instance.title,
-            f'Текст сообщения: {form.instance.content}, Дата:{form.instance.date_event}',
-            'davidkinevgeny@gmail.com',
-            ['realtordavidkin@gmail.com'],
-            fail_silently=False,
-        )
+        # send_my_email.delay(form.instance.title, form.instance.content, form.instance.date_event)
+        send_my_email.apply_async((form.instance.title, form.instance.content, form.instance.date_event), eta=(form.instance.date_event - timedelta(hours=1)))
         return super().form_valid(form)
 
 
 class SheetCreateViewAPI(generics.CreateAPIView):
     '''API создания записи'''
     serializer_class = SheetCreateViewSerializer
+
 
 
 class SheetUpdateView(UpdateView):

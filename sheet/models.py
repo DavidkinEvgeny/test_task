@@ -1,5 +1,6 @@
 from django.db import models
 from django.urls import reverse
+from datetime import datetime, timedelta
 
 
 class Sheet(models.Model):
@@ -19,3 +20,7 @@ class Sheet(models.Model):
     
     def get_absolute_url(self):
         return reverse('detail_sheet', kwargs={'pk': self.pk})
+    
+    def time_sending_mail(self):
+        time_sending = self.date_event - timedelta(hours=1)
+        return time_sending
