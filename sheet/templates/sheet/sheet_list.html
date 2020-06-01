@@ -1,0 +1,20 @@
+{% extends '_base.html' %}
+
+
+{% block title %}Список заметок{% endblock title %}
+
+
+{% block content %}
+    <form action="{% url 'search_results' %}" method="get">
+        <input type="radio" name="date" value="day" placeholder="День" aria-label="День">День
+        <input type="radio" name="date" value="week" placeholder="Неделя" aria-label="Неделя">Неделя
+        <input type="radio" name="date" value="month" placeholder="Месяц" aria-label="Месяц">Месяц
+        <input type="radio" name="date" value="all" placeholder="Все" aria-label="Все" checked>Все
+        <input type="search" name="title" placeholder="Поиск" aria-label="Поиск">
+        <button type="submit">Найти</button>
+    </form>
+    {% for sheet in sheet_list %}
+        <h2>{{ sheet.title }}</h2>
+        <a href="{{ sheet.get_absolute_url }}">Подробнее</a>
+    {% endfor %}
+{% endblock content %}

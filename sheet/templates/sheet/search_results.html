@@ -1,0 +1,20 @@
+{% extends '_base.html' %}
+
+
+{% block title %}Список заметок{% endblock title %}
+
+
+{% block content %}
+    
+    {% if sheet_list %}
+        {% for sheet in sheet_list %}
+            <h2>{{ sheet.title }}</h2>
+            <a href="{{ sheet.get_absolute_url }}">Подробнее</a>
+        {% endfor %}
+    {% else %}
+        <p>Запись не найдена</p>
+    {% endif %}
+        
+
+
+{% endblock content %}

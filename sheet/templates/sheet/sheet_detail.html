@@ -1,0 +1,12 @@
+{% extends '_base.html' %}
+
+
+{% block title %}{{ sheet.title }}{% endblock title %}
+
+
+{% block content %}
+    <h2>{{ sheet.title }}</h2>
+    <p>{{ sheet.content }}</p>
+    <p>Дата мероприятия: {{ sheet.date_event }}</p>
+    <p><a href="{% url 'update_sheet' sheet.pk %}">Изменить</a>|<a href="{% url 'delete_sheet' sheet.pk %}">Удалить</a></p>
+{% endblock content %}
