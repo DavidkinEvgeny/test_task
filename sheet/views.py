@@ -4,8 +4,13 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.core.mail import send_mail
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import generics
 from .models import Sheet
 from .forms import SheetForm
+from .serializers import SheetListSerializer, SheetDetailSerializer, SheetCreateViewSerializer, \
+    SheetUpdateViewSerializer, SheetDeleteViewSerializer, SerchResultsSerializer
 
 
 class SheetListView(ListView):
@@ -15,11 +20,25 @@ class SheetListView(ListView):
     template_name = 'sheet/sheet_list.html'
 
 
+class SheetListViewAPI(generics.ListAPIView):
+    '''API списка записей'''
+    serializer_class = SheetListSerializer
+    def get_queryset(self):
+        sheet_list = Sheet.objects.all()
+        return sheet_list
+
+
 class SheetDetailView(DetailView):
     '''Представление отдельной записи'''
     model = Sheet
     context_object_name = 'sheet'
     template_name = 'sheet/sheet_detail.html'
+
+
+class SheetDetailViewAPI(generics.RetrieveAPIView):
+    '''API отдельной записи'''
+    serializer_class = SheetListSerializer
+    queryset = Sheet.objects.all()
 
 
 class SheetCreateView(CreateView):
@@ -31,13 +50,18 @@ class SheetCreateView(CreateView):
     def form_valid(self, form):
         form.save()
         send_mail(
-        form.instance.title,
-        f'Текст сообщения: {form.instance.content}, Дата:{form.instance.date_event}',
-        'davidkinevgeny@gmail.com',
-        ['realtordavidkin@gmail.com'],
-        fail_silently=False,
-    )
+            form.instance.title,
+            f'Текст сообщения: {form.instance.content}, Дата:{form.instance.date_event}',
+            'davidkinevgeny@gmail.com',
+            ['realtordavidkin@gmail.com'],
+            fail_silently=False,
+        )
         return super().form_valid(form)
+
+
+class SheetCreateViewAPI(generics.CreateAPIView):
+    '''API создания записи'''
+    serializer_class = SheetCreateViewSerializer
 
 
 class SheetUpdateView(UpdateView):
@@ -47,11 +71,23 @@ class SheetUpdateView(UpdateView):
     template_name = 'sheet/sheet_update.html'
 
 
+class SheetUpdateViewAPI(generics.UpdateAPIView):
+    '''API изменения записи'''
+    serializer_class = SheetUpdateViewSerializer
+    queryset = Sheet.objects.all()
+
+
 class SheetDeleteViews(DeleteView):
     '''Представление удаления записи'''
     model = Sheet
     template_name = 'sheet/sheet_delete.html'
     success_url = reverse_lazy('list_sheet')
+
+
+class SheetDeleteViewAPI(generics.DestroyAPIView):
+    '''API удаления записи'''
+    serializer_class = SheetDeleteViewSerializer
+    queryset = Sheet.objects.all()
 
 
 class SerchResultsView(ListView):
@@ -75,3 +111,21 @@ class SerchResultsView(ListView):
         elif guery_date == 'all':
             return Sheet.objects.filter(title__icontains=query)
 
+
+class SerchResultsViewAPI(generics.ListAPIView):
+    '''API поиска записей'''
+    serializer_class = SerchResultsSerializer
+    def get_queryset(self):
+        query = self.request.GET.get('title')
+        guery_date = self.request.GET.get('date')
+        delta_month = timezone.now() - timedelta(days=30)
+        delta_week = timezone.now() - timedelta(days=7)
+        delta_day = timezone.now() - timedelta(days=1)
+        if guery_date == 'day':
+            return Sheet.objects.filter(title__icontains=query, date_event__gte=delta_day)
+        elif guery_date == 'week':
+            return Sheet.objects.filter(title__icontains=query, date_event__gte=delta_week)
+        elif guery_date == 'month':
+            return Sheet.objects.filter(title__icontains=query, date_event__gte=delta_month)
+        elif guery_date == 'all':
+            return Sheet.objects.filter(title__icontains=query)
